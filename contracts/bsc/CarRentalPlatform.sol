@@ -71,5 +71,53 @@ modifier onlyOwner(){
     _;
 }
 
+//Functions
+
+//Set Owner
+function setOwner(address _newOwner) external onlyOwner{
+    owner=_newOwner;
+}
+
+//addUser #non existing
+function addUsers(string calldata name,string calldata lastName) external {
+require(!isExistingUser(msg.sender),"The user already exists!");
+user[msg.sender]=User(msg.sender,name,lastName,0,0,0,0);
+emit addUser(msg.sender, user[msg.sender].name, user[msg.sender].lastName);
+}
+
+//add car #onlyOwner #nonExistingCar
+function addCars(string calldata name,string calldata imgurl, uint rentFee,uint saleFee) external onlyOwner{
+    _counter.increment();
+    uint count=_counter.current();
+    cars[count]=Cars(count,name,imgurl,Status.Available,rentFee,saleFee);
+    emit carsAdded(count, cars[count].name, cars[count].imgUrl, cars[count].rentFee, cars[count].saleFee);
+}
+
+// edit car data #onlyOwner #existingCar
+function editCarData(uint id,string calldata name,string calldata imgUrl,uint rentFee,uint saleFee) external onlyOwner{
+require(cars[id].id!=0,"Car with the given Id does not exist!");
+Cars storage currCar=cars[id];
+if(bytes(name).length!=0){
+    currCar.name=name;
+}
+if(bytes(imgUrl).length!=0){
+    currCar.imgUrl=imgUrl;
+}
+if(rentFee>0){
+    currCar.rentFee=rentFee;
+}
+if(saleFee>0){
+    currCar.saleFee=saleFee;
+}
+emit updateCarMetaData(id, currCar.name, currCar.imgUrl, currCar.rentFee, currCar.saleFee);
+}
+
+//edit car status #existing car #onlyowner
+function editCarStatus(uint id, Status status) external onlyOwner{
+require(cars[id].id!=0,"Car with the given Id does not exist!");
+Cars storage currCar=cars[id];
+currCar.status=status;
+emit updateStatus(id,currCar.status);
+}
 
 }
