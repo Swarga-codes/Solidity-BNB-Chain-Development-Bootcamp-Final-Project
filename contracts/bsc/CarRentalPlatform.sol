@@ -144,4 +144,26 @@ user[msg.sender].start=0;
 
 emit checkIn(msg.sender, rentedId);
 }
+
+//Deposit #existinguser
+function depositAmt() external payable{
+require(isExistingUser(msg.sender),"User does not exist!");
+user[msg.sender].balance+=msg.value;
+emit deposit(msg.sender, msg.value);
+}
+
+//makePayment #existinguser #sufficient balance
+function makePayment() external{
+    require(isExistingUser(msg.sender),"User does not exist");
+    uint debt=user[msg.sender].debt;
+    uint balance=user[msg.sender].balance;
+    require(debt>0,"User has no debt!");
+    require(balance>=debt,"User has insufficient balance!");
+    unchecked {
+      user[msg.sender].balance-=debt;  
+    }
+    totalPayments+=debt;
+    user[msg.sender].debt=0;
+    emit paymentMade(msg.sender, debt);
+}
 }
