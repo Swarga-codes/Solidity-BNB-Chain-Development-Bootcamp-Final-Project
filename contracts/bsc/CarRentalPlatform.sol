@@ -119,5 +119,29 @@ Cars storage currCar=cars[id];
 currCar.status=status;
 emit updateStatus(id,currCar.status);
 }
+// checkout car #existing user
+function checkOutCar(uint carsId) external{
+    require(isExistingUser(msg.sender),"User not found!");
+    require(cars[carsId].status==Status.Available,"Car is already rented and in use");
+    require(user[msg.sender].rentedCarsId==0,"User has already rented a car");
+    require(user[msg.sender].debt==0,"User has uncleared debt");
+    cars[carsId].status=Status.InUse;
+    user[msg.sender].start=block.timestamp;
+    user[msg.sender].rentedCarsId=carsId;
+    emit checkOut(msg.sender, carsId);
+}
 
+//Check In car #rented car #existing user
+function checkInCar() external{
+require(isExistingUser(msg.sender),"User does not exist!");
+require(user[msg.sender].rentedCarsId!=0,"User has not rented any car");
+uint timeUsed=block.timestamp-user[msg.sender].start;
+uint rentedId=user[msg.sender].rentedCarsId;
+user[msg.sender].debt+=calculateDebt(timeUsed,cars[rentedId].rentFee);
+cars[rentedId].status=Status.Available;
+user[msg.sender].rentedCarsId=0;
+user[msg.sender].start=0;
+
+emit checkIn(msg.sender, rentedId);
+}
 }
