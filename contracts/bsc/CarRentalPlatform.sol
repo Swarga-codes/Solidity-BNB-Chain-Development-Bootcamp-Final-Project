@@ -96,7 +96,7 @@ function addCars(string calldata name,string calldata imgurl, uint rentFee,uint 
 
 // edit car data #onlyOwner #existingCar
 function editCarData(uint id,string calldata name,string calldata imgUrl,uint rentFee,uint saleFee) external onlyOwner{
-require(cars[id].id!=0,"Car with the given Id does not exist!");
+require(cars[id].carsId!=0,"Car with the given Id does not exist!");
 Cars storage currCar=cars[id];
 if(bytes(name).length!=0){
     currCar.name=name;
@@ -115,7 +115,7 @@ emit updateCarMetaData(id, currCar.name, currCar.imgUrl, currCar.rentFee, currCa
 
 //edit car status #existing car #onlyowner
 function editCarStatus(uint id, Status status) external onlyOwner{
-require(cars[id].id!=0,"Car with the given Id does not exist!");
+require(cars[id].carsId!=0,"Car with the given Id does not exist!");
 Cars storage currCar=cars[id];
 currCar.status=status;
 emit updateStatus(id,currCar.status);
@@ -189,6 +189,79 @@ function withdrawOwnerBalance(uint amount) external onlyOwner{
     unchecked {
         totalPayments-=amount;
     }
+}
+
+//Query Data
+
+//getOwner
+
+function getOwner() external view returns(address){
+return owner;
+}
+
+
+//isExistingUser
+function isExistingUser(address userId) private view returns(bool){
+    return user[userId].walletAddress!=address(0);
+}
+
+//getUser #existing user
+
+function getUser(address userId) external view returns(User memory){
+require(isExistingUser(userId),"User not found!");
+return user[userId];
+}
+
+//get Car #existing car
+
+function getCar(uint carId) external view returns(Cars memory){
+    require(cars[carId].carsId!=0,"Car does not exists");
+    return cars[carId];
+} 
+
+
+//getCarByStatus
+
+function getCarByStatus(Status status) external view returns(Cars[] memory){
+uint count=0;
+uint length=_counter.current();
+for(uint i=1;i<=length;i++){
+    if(cars[i].status==status){
+        count++;
+    }
+}
+Cars[] memory filteredCars=new Cars[](count);
+count=0;
+for(uint i=1;i<=length;i++){
+    if(cars[i].status==status){
+        filteredCars[count]=cars[i];
+        count++;
+    }
+}
+return filteredCars;
+}
+
+//calculateDebt
+function calculateDebt(uint timeUsed,uint rentFee) private pure returns(uint){
+    uint convertToMins=timeUsed/60;
+    return convertToMins*rentFee;
+}
+
+//getCurrentCount
+function getCurrentCount() external view returns(uint){
+    return _counter.current();
+}
+
+//getContractBalance
+
+function getContractBalance() external view onlyOwner returns(uint){
+    return address(this).balance;
+}
+
+//getTotalPayment #onlyowner
+
+function getTotalPayment() external view onlyOwner returns(uint){
+    return totalPayments;
 }
 
 }
