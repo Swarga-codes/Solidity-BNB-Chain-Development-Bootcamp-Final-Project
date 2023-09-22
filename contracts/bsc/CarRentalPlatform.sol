@@ -1,7 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.4;
 import "../../node_modules/@openzeppelin/contracts/utils/Counters.sol";
-contract CarRentalPlatform {
+import "../../node_modules/@openzeppelin/contracts/security/ReentrancyGuard.sol";
+contract CarRentalPlatform is ReentrancyGuard{
 //Data
 
 
@@ -166,4 +167,28 @@ function makePayment() external{
     user[msg.sender].debt=0;
     emit paymentMade(msg.sender, debt);
 }
+
+//Withdraw user balance #existing user
+function withdrawBalance(uint amount) external nonReentrant{
+    require(isExistingUser(msg.sender),"User does not exist!");
+    uint balance=user[msg.sender].balance;
+    require(balance>=amount,"Insufficient Balance!");
+    unchecked {
+        user[msg.sender].balance-=amount;
+    }
+(bool success, )=msg.sender.call{value:amount}("");
+require(success,"Transcation failed!");
+emit withdrawWalletBalance(msg.sender, amount);
+}
+
+//Withdraw owner balance #onlyowner modifier
+function withdrawOwnerBalance(uint amount) external onlyOwner{
+    require(totalPayments>=amount,"Insufficient balance!");
+    (bool success,)=owner.call{value:amount}("");
+    require(success,"Transaction failed!");
+    unchecked {
+        totalPayments-=amount;
+    }
+}
+
 }
